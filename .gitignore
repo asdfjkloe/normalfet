@@ -1,0 +1,6 @@
+*.pro.user*
+circuit
+*.o
+*.log
+logfiles/*
+data/*
