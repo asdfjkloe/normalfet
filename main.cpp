@@ -362,8 +362,28 @@ static inline void gsine(char ** argv) {
     d.save();
 }
 
+static inline void inv_square(char ** argv) {
+    double f = stod(argv[3]);
+    int N = stoi(argv[4]);
+    double Vs = stod(argv[5]);
+    double Vd = stod(argv[6]);
+    double Vg0 = stod(argv[7]);
+    double Vg1 = stod(argv[8]);
+    int ramp = stoi(argv[9]);
+
+    auto s = square_signal<3>(N / f, {Vs, Vd, Vg0}, {Vs, Vd, Vg1}, f, ramp * c::dt, ramp * c::dt);
+
+    // spam signal to cout
+    for (int i = 0; i < s.N_t; ++i) {
+        cout << s.V[i][G] << endl;
+    }
+
+    inverter inv(nfet, pfet, 5e-17);
+    inv.time_evolution(s);
+}
+
 static inline void test(char **) {
-    double f[5] = { 5e10, 1e11, 2e11, 5e11, 1e12 };
+    /*double f[5] = { 5e10, 1e11, 2e11, 5e11, 1e12 };
 
     for (int i = 0; i < 5; ++i) {
         // stupid shit to reset save folder
@@ -375,7 +395,9 @@ static inline void test(char **) {
 
         // NO SAVING DIGGA EINFACH OUTPUT LOL
         //inv.save<false>();
-    }
+
+        cout << endl << endl;
+    }*/
 }
 
 int main(int argc, char ** argv) {
