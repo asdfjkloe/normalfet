@@ -371,6 +371,14 @@ static inline void inv_square(char ** argv) {
     double Vg1 = stod(argv[8]);
     int ramp = stoi(argv[9]);
 
+    cout << f << endl;
+    cout << N << endl;
+    cout << Vs << endl;
+    cout << Vd << endl;
+    cout << Vg0 << endl;
+    cout << Vg1 << endl;
+    cout << ramp << endl;
+
     auto s = square_signal<3>(N / f, {Vs, Vd, Vg0}, {Vs, Vd, Vg1}, f, ramp * c::dt, ramp * c::dt);
 
     // spam signal to cout
