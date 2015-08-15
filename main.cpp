@@ -437,6 +437,8 @@ int main(int argc, char ** argv) {
         gsine(argv);
     } else if (stype == "gsquare" && argc == 10) {
         gsquare(argv);
+    } else if (stype == "inv_square" && argc == 10) {
+        inv_square(argv);
     } else {
         test(argv);
     }
