@@ -367,13 +367,14 @@ static inline void test(char **) {
 
     for (int i = 0; i < 5; ++i) {
         // stupid shit to reset save folder
-        save_folder<true>("inv_square_" + std::to_string((int)(f[i] / 1e9)) + "GHz", true);
+        //save_folder<true>("inv_square_" + std::to_string((int)(f[i] / 1e9)) + "GHz", true);
 
         auto s = square_signal<3>(3 / f[i], {0.0, 0.2, 0.0}, {0.0, 0.2, 0.2}, f[i], 20*c::dt, 20*c::dt);
         inverter inv(nfet, pfet, 5e-17);
         inv.time_evolution(s);
 
-        inv.save<false>();
+        // NO SAVING DIGGA EINFACH OUTPUT LOL
+        //inv.save<false>();
     }
 }
 
