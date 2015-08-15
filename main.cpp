@@ -362,10 +362,19 @@ static inline void gsine(char ** argv) {
     d.save();
 }
 
-static inline void test(char ** argv) {
-    device d("nfet", ntype);
-    auto t = transfer<false>(d.p, { { 0, .2, .2 } }, .2, 1);
-    cout << t << endl;
+static inline void test(char **) {
+    double f[5] = { 5e10, 1e11, 2e11, 5e11, 1e12 };
+
+    for (int i = 0; i < 5; ++i) {
+        // stupid shit to reset save folder
+        save_folder<true>("inv_square_" + std::to_string((int)(f[i] / 1e9)) + "GHz", true);
+
+        auto s = square_signal<3>(3 / f[i], {0.0, 0.2, 0.0}, {0.0, 0.2, 0.2}, f[i], 20*c::dt, 20*c::dt);
+        inverter inv(nfet, pfet, 5e-17);
+        inv.time_evolution(s);
+
+        inv.save<false>();
+    }
 }
 
 int main(int argc, char ** argv) {
@@ -373,10 +382,16 @@ int main(int argc, char ** argv) {
 
     // first argument is always the number of threads
     // (can not be more than the number specified when compiling openBLAS)
-    omp_set_num_threads(stoi(argv[1]));
+    if (argc > 1) {
+        omp_set_num_threads(stoi(argv[1]));
+    }
+
+    string stype = "";
+    if (argc > 2) {
+        stype = argv[2];
+    }
 
     // second argument chooses the type of simulation
-    string stype(argv[2]);
     if (stype == "point" && argc == 6) {
         point(argv);
     } else if (stype == "trans" && argc == 9) {
@@ -399,10 +414,8 @@ int main(int argc, char ** argv) {
         gsine(argv);
     } else if (stype == "gsquare" && argc == 10) {
         gsquare(argv);
-    } else if (stype == "test") {
-        test(argv);
     } else {
-        cout << "wrong number of arguments or unknown simulation type" << endl;
+        test(argv);
     }
 
     return 0;
