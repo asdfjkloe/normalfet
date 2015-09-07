@@ -14,6 +14,7 @@
 #include "current.hpp"
 #include "device_params.hpp"
 #include "potential.hpp"
+#include "signal.hpp"
 #include "voltage.hpp"
 #include "util/inverse.hpp"
 #include "util/system.hpp"

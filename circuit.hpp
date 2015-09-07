@@ -34,11 +34,12 @@ public:
     template<bool plots>
     inline void save();
 
+    std::vector<voltage<N_out>> V_out;
+
 protected:
     std::vector<device> devices;
     std::array<contact_ptr, N_in> inputs;
     std::array<contact_ptr, N_out> outputs;
-    std::vector<voltage<N_out>> V_out;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

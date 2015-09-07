@@ -50,6 +50,9 @@ public:    static inline arma::vec get_n0(const device_params & p);
 #ifndef CHARGE_DENSITY_HPP_BODY
 #define CHARGE_DENSITY_HPP_BODY
 
+#include "potential.hpp"
+#include "wave_packet.hpp"
+
 charge_density::charge_density() {
 }
 
@@ -421,7 +424,8 @@ arma::vec charge_density::get_n0(const device_params & p) {
         double dos = E / sqrt(4*p.t1*p.t1*p.t2*p.t2 - (E*E - p.t1*p.t1 - p.t2*p.t2) * (E*E - p.t1*p.t1 - p.t2*p.t2));
         vec ret = arma::vec(3);
         ret(0) = (1 - fermi(E, p.F[S])) * dos;
-        ret(1) = (1 - fermi(E, p.F[G])) * dos;
+        ret(1) = 0.0;
+//        ret(1) = (1 - fermi(E, p.F[G])) * dos;
 //        ret(1) = (1 - fermi(E, 0)) * dos;
         ret(2) = (1 - fermi(E, p.F[D])) * dos;
         return ret;
@@ -432,7 +436,8 @@ arma::vec charge_density::get_n0(const device_params & p) {
         double dos = E / sqrt(4*p.t1*p.t1*p.t2*p.t2 - (E*E - p.t1*p.t1 - p.t2*p.t2) * (E*E - p.t1*p.t1 - p.t2*p.t2));
         vec ret = arma::vec(3);
         ret(0) = fermi(E, p.F[S]) * dos;
-        ret(1) = fermi(E, p.F[G]) * dos;
+        ret(1) = 0.0;
+//        ret(1) = fermi(E, p.F[G]) * dos;
 //        ret(1) = fermi(E, 0) * dos;
         ret(2) = fermi(E, p.F[D]) * dos;
         return ret;

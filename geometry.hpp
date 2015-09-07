@@ -36,7 +36,7 @@ static const geometry fet_geometry {
     10.0, // l_dox
      7.0, // l_dc
      1.0, // r_cnt
-     2.0, // d_ox
+     3.0, // d_ox
      2.0, // r_ext
      0.4, // dx
      0.1  // dr

@@ -6,7 +6,7 @@
 #include "circuit.hpp"
 
 template<int N>
-class ring_oscillator : private circuit<2, N> {
+class ring_oscillator : public circuit<2, N> {
 public:
     inline ring_oscillator(const device_params & n, const device_params & p, double capacitance);
 
