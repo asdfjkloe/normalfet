@@ -384,21 +384,27 @@ static inline void inv_square(char ** argv) {
 }
 
 static inline void test(char **) {
-    /*double f[5] = { 5e10, 1e11, 2e11, 5e11, 1e12 };
+    arma::vec R0 = potential::get_R0(nfet, {0.0, 0.0, 0.0});
+    charge_density n1, n2;
+    n1.total = arma::vec(nfet.N_x);
+    n2.total = arma::vec(nfet.N_x);
 
-    for (int i = 0; i < 5; ++i) {
-        // stupid shit to reset save folder
-        //save_folder<true>("inv_square_" + std::to_string((int)(f[i] / 1e9)) + "GHz", true);
+    for (int i = 0; i < nfet.N_x; ++i) {
+        n1.total[i] = +5e-21 * (std::tanh((i - 10.0)/5.0) + 1) * (std::tanh(-(i + 10.0 - nfet.N_x)/5.0) + 1) / 4;
+        n2.total[i] = -5e-21 * (std::tanh((i - 10.0)/5.0) + 1) * (std::tanh(-(i + 10.0 - nfet.N_x)/5.0) + 1) / 4;
+    }
 
-        auto s = square_signal<3>(3 / f[i], {0.0, 0.2, 0.0}, {0.0, 0.2, 0.2}, f[i], 20*c::dt, 20*c::dt);
-        inverter inv(nfet, pfet, 5e-17);
-        inv.time_evolution(s);
+    std::cout << n1.total[nfet.N_x / 2] << std::endl;
 
-        // NO SAVING DIGGA EINFACH OUTPUT LOL
-        //inv.save<false>();
+    plot(n1.total);
 
-        cout << endl << endl;
-    }*/
+    potential phi0(nfet, R0);
+    potential phi1(nfet, R0, n1);
+    potential phi2(nfet, R0, n2);
+
+    plot(phi0.data);
+    plot(phi1.data);
+    plot(phi2.data);
 }
 
 int main(int argc, char ** argv) {

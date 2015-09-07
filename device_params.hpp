@@ -254,10 +254,10 @@ void device_params::update(const std::string & n_) {
     dc2  = arma::span( dc.a * 2,  dc.b * 2 + 1);
 
     // hopping parameters
-    t1  = 0.25 * E_g  * (1 + sqrt(1 + 2 * c::h_bar2 / (dx*dx * 1E-18 * m_eff * E_g  * c::e)));
-    t2  = 0.25 * E_g  * (1 - sqrt(1 + 2 * c::h_bar2 / (dx*dx * 1E-18 * m_eff * E_g  * c::e)));
-    tc1 = 0.25 * E_gc * (1 + sqrt(1 + 2 * c::h_bar2 / (dx*dx * 1E-18 * m_efc * E_gc * c::e)));
-    tc2 = 0.25 * E_gc * (1 - sqrt(1 + 2 * c::h_bar2 / (dx*dx * 1E-18 * m_efc * E_gc * c::e)));
+    t1  = 0.25 * E_g  * (1 + sqrt(1 + 8 * c::h_bar2 / (dx*dx * 1E-18 * m_eff * E_g  * c::e)));
+    t2  = 0.25 * E_g  * (1 - sqrt(1 + 8 * c::h_bar2 / (dx*dx * 1E-18 * m_eff * E_g  * c::e)));
+    tc1 = 0.25 * E_gc * (1 + sqrt(1 + 8 * c::h_bar2 / (dx*dx * 1E-18 * m_efc * E_gc * c::e)));
+    tc2 = 0.25 * E_gc * (1 - sqrt(1 + 8 * c::h_bar2 / (dx*dx * 1E-18 * m_efc * E_gc * c::e)));
     tcc = 2.0 / (1.0 / t2 + 1.0 / tc2);
 
     // create t_vec
