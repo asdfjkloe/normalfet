@@ -5,6 +5,7 @@
 
 #include "constant.hpp"
 #include "device_params.hpp"
+#include "potential.hpp"
 
 class wave_packet {
 public:

@@ -20,14 +20,14 @@ public:
 };
 
 static const model nfetc_model { // most general model
-    0.62,             // E_g
-    0.02 * c::m_e,    // m_eff (Claus et al)
+    0.50,             // E_g
+    0.04* c::m_e,     // m_eff (Claus et al)
     0.30,             // E_gc (Claus et al)
     0.10 * c::m_e,    // m_efc (Claus et al)
     {
-        +0.62 / 2 + 0.015, // F[S] (p)
-        +0.62 / 2 + 0.015, // F[D] (n)
-         0.2               // F[G] (matching)
+        +0.5 / 2 + 0.02, // F[S] (p)
+        +0.5 / 2 + 0.02, // F[D] (n)
+         0.15               // F[G] (matching)
     }
 };
 
@@ -52,6 +52,18 @@ static const model pfet_model {
         -nfet_model.F[S],  // F[S]
         -nfet_model.F[D],  // F[D]
         -nfet_model.F[G]  // F[G]
+    }
+};
+
+static const model pfetc_model {
+    nfetc_model.E_g,   // E_g
+    nfetc_model.m_eff, // m_eff
+    nfetc_model.E_gc,  // E_gc
+    nfetc_model.m_efc, // m_efc
+    {
+        -nfetc_model.F[S],  // F[S]
+        -nfetc_model.F[D],  // F[D]
+        -nfetc_model.F[G]  // F[G]
     }
 };
 
