@@ -1,6 +1,7 @@
 *.pro.user*
-circuit
+normalfet
 *.o
 *.log
 logfiles/*
 data/*
+output/*
