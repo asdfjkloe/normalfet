@@ -243,6 +243,29 @@ static inline void outp(const device_params & p, const voltage<3> & V0, double V
     }
 }
 
+// compute curves
+static inline void curve(const device_params & p, const voltage<3> & V0, double V_d1, double V_g1, int N_d, int N_g) {
+    std::vector<voltage<3>> V;
+
+    vec Vd = linspace(V0[D], V_d1, N_d);
+    vec Vg = linspace(V0[G], V_g1, N_g);
+
+    for (int i = 0; i < N_d; ++i) {
+        for (int j = 0; j < N_g; ++j) {
+            V.push_back({V0[S], Vd[i], Vg[j]});
+        }
+    }
+
+    auto I = curve(p, V);
+
+    output_results();
+    for (unsigned i = 0; i < V.size(); ++i) {
+        if (I[i].total(0) != 666) {
+            cout << V[i][S] << " " << V[i][D] << " " << V[i][G] << " " << I[i].total(0) << endl;
+        }
+    }
+}
+
 // compute steady state inverter
 static inline void inv(const device_params & p1, const device_params & p2, const voltage<3> & V0, double V_in1, int N) {
     inverter inv(p1, p2);
@@ -360,6 +383,8 @@ inline void test() {
     device d2 = device("nfetc", nfetc, { 0.0, 0.2, -0.2});
     d2.steady_state();
     plot_ldos(nfetc, d2.phi[0], 1000, -1.5, 1.5);
+
+    return;
 
     auto curve0 = transfer(nfet, {{0.0, 0.2, -0.2}}, 0.2, 100);
     auto curve1 = arma::mat(curve0.n_rows, curve0.n_cols);
@@ -496,6 +521,20 @@ int main(int argc, char ** argv) {
         double V_d1 = stod(argv[7]);
         int N = stoi(argv[8]);
         outp(p, {V_s0, V_d0, V_g0}, V_d1, N);
+    } else if (stype == "curve") {
+        if (argc != 11) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
+        device_params p = get_device_params(argv[3]);
+        double V_s0 = stod(argv[4]);
+        double V_d0 = stod(argv[5]);
+        double V_g0 = stod(argv[6]);
+        double V_d1 = stod(argv[7]);
+        double V_g1 = stod(argv[8]);
+        int N_d = stoi(argv[9]);
+        int N_g = stoi(argv[10]);
+        curve(p, {V_s0, V_d0, V_g0}, V_d1, V_g1, N_d, N_g);
     } else if (stype == "inv") {
         if (argc != 10) {
             cout << "Wrong number of arguments!" << endl;

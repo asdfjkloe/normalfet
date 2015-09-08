@@ -132,7 +132,7 @@ device_params::device_params(const std::string & str) {
     string line;
     while (getline(stream, line)) {
         // continue if empty line or comment
-        if ((line.empty()) || (line[line.find_first_not_of(' ')] == ';')) {
+        if ((line.empty()) || (line[line.find_first_not_of(' ')] == '#')) {
             continue;
         }
 
@@ -152,6 +152,10 @@ device_params::device_params(const std::string & str) {
             // check if name (the only non double value)
             if (it->second == 0) {
                 name = right;
+
+                // remove quotes
+                name.erase(0, 1);
+                name.erase(name.size() - 1);
 
                 // add data index
                 s.insert(it->second);
@@ -202,12 +206,12 @@ std::string device_params::to_string() const {
 
     stringstream ss;
 
-    ss << "name    = " << name    << endl;
+    ss << "name    = \"" << name << "\"" << endl;
 
-    ss << endl << "; model" << endl;
+    ss << endl << "# model" << endl;
     ss << model::to_string();
 
-    ss << endl << "; geometry" << endl;
+    ss << endl << "# geometry" << endl;
     ss << geometry::to_string();
 
     return ss.str();

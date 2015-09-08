@@ -7,6 +7,7 @@
 ./normalfet #threads point dev_name V_s V_d V_g
 ./normalfet #threads trans dev_name V_s0 V_d0 V_g0 V_g1 N
 ./normalfet #threads outp dev_name V_s0 V_d0 V_g0 V_d1 N
+./normalfet #threads curve dev_name V_s0 V_d0 V_g0 V_d1 V_g1 N_d N_g
 ./normalfet #threads inv dev_name1 dev_name2 V_ss V_dd V_in0 V_in1 N
 ./normalfet #threads wave dev_name V_s V_d V_g E s/d
 ./normalfet #threads step dev_name V_s0 V_d0 V_g0 V_s1 V_d1 V_g1 tswitch T
