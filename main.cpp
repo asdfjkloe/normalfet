@@ -100,6 +100,8 @@ static inline void cap(const device_params & p) {
     double csg = c::eps_0 * M_PI * (p.R * p. R - (p.r_cnt + p.d_ox) * (p.r_cnt + p.d_ox)) / p.l_sg * 1e-9;
     double cdg = c::eps_0 * M_PI * (p.R * p. R - (p.r_cnt + p.d_ox) * (p.r_cnt + p.d_ox)) / p.l_dg * 1e-9;
     double czyl = 2 * M_PI * c::eps_0 * p.eps_ox * p.l_g / std::log((p.r_cnt + p.d_ox) / p.r_cnt) * 1e-9;
+
+    output_results();
     cout << "C_sg  = " << csg << endl;
     cout << "C_dg  = " << cdg << endl;
     cout << "C_zyl = " << czyl << endl;
