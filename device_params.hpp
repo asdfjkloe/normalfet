@@ -60,7 +60,7 @@ public:
     inline device_params(const std::string & n, const geometry & g, const model & m);
     inline device_params(const std::string & str);
 
-    inline std::string to_string();
+    inline std::string to_string() const;
 
     inline void update(const std::string & n);
 };
@@ -168,14 +168,14 @@ device_params::device_params(const std::string & str) {
     // check if all fields were in string
     if (s.size() != 22) {
         cout << "Error while loading device!!" << endl;
-        return;
+        throw;
     }
 
     // save data
     E_g     = d[ 1 - 1];
-    m_eff   = d[ 2 - 1];
+    m_eff   = d[ 2 - 1] * c::m_e;
     E_gc    = d[ 3 - 1];
-    m_efc   = d[ 4 - 1];
+    m_efc   = d[ 4 - 1] * c::m_e;
     F[S]    = d[ 5 - 1];
     F[D]    = d[ 6 - 1];
     F[G]    = d[ 7 - 1];
@@ -197,7 +197,7 @@ device_params::device_params(const std::string & str) {
     update(name);
 }
 
-std::string device_params::to_string() {
+std::string device_params::to_string() const {
     using namespace std;
 
     stringstream ss;

@@ -46,21 +46,53 @@ static inline void setup() {
 static inline device_params get_device_params(const string & n) {
     if (n == "nfet") {
         return nfet;
-    } else if (n == "nfetc") {
+    }
+    if (n == "nfetc") {
         return nfetc;
-    } else if (n == "pfet") {
+    }
+    if (n == "pfet") {
         return pfet;
-    } else if (n == "pfetc") {
+    }
+    if (n == "pfetc") {
         return pfetc;
     }
 
-    //LOAD DEV
+    ifstream file(n);
+    if (!file) {
+        cout << "no device_params with name or filename " << n << endl;
+        exit(0);
+    }
 
-    throw new invalid_argument("no device_params with name" + n);
+    stringstream ss;
+    ss << file.rdbuf();
+
+    try {
+        device_params p(ss.str());
+        return p;
+    } catch(...) {
+        cout << "device_params file corrupted!" << endl;
+        exit(0);
+    }
 }
 
 static inline void output_results() {
     cout << endl << endl << "results" << endl << scientific << setprecision(15);
+}
+
+// creates dev files
+static inline void dev() {
+    ofstream file = ofstream("nfet.ini");
+    file << nfet.to_string();
+    file.close();
+    file = ofstream("pfet.ini");
+    file << pfet.to_string();
+    file.close();
+    file = ofstream("nfetc.ini");
+    file << nfetc.to_string();
+    file.close();
+    file = ofstream("pfetc.ini");
+    file << pfetc.to_string();
+    file.close();
 }
 
 // computes 1D potential
@@ -366,21 +398,35 @@ int main(int argc, char ** argv) {
     }
 
     // second argument chooses the type of simulation
-    if (stype == "pot1D" && (argc == 7 || argc == 8)) {
+    if (stype == "dev") {
+        dev();
+    } else if (stype == "pot1D") {
+        if ((argc != 7) && (argc != 8)) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p = get_device_params(argv[3]);
         double V_s = stod(argv[4]);
         double V_d = stod(argv[5]);
         double V_g = stod(argv[6]);
         bool nosc = ((argc == 8) && (string(argv[7]) == "nosc"));
         pot1D(p, {V_s, V_d, V_g}, nosc);
-    } else if (stype == "pot2D" && (argc == 7 || argc == 8)) {
+    } else if (stype == "pot2D") {
+        if ((argc != 7) && (argc != 8)) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p = get_device_params(argv[3]);
         double V_s = stod(argv[4]);
         double V_d = stod(argv[5]);
         double V_g = stod(argv[6]);
         bool nosc = ((argc == 8) && (string(argv[7]) == "nosc"));
         pot2D(p, {V_s, V_d, V_g}, nosc);
-    } else if (stype == "ldos" && (argc == 10 || argc == 11)) {
+    } else if (stype == "ldos") {
+        if ((argc != 10) && (argc != 11)) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p = get_device_params(argv[3]);
         double V_s = stod(argv[4]);
         double V_d = stod(argv[5]);
@@ -390,19 +436,31 @@ int main(int argc, char ** argv) {
         double N = stod(argv[9]);
         bool nosc = ((argc == 11) && (string(argv[10]) == "nosc"));
         ldos(p, {V_s, V_d, V_g}, E0, E1, N, nosc);
-    } else if (stype == "charge" && argc == 7) {
+    } else if (stype == "charge") {
+        if (argc != 7) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p = get_device_params(argv[3]);
         double V_s = stod(argv[4]);
         double V_d = stod(argv[5]);
         double V_g = stod(argv[6]);
         charge(p, {V_s, V_d, V_g});
-    } else if (stype == "point" && argc == 7) {
+    } else if (stype == "point") {
+        if (argc != 7) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p = get_device_params(argv[3]);
         double V_s = stod(argv[4]);
         double V_d = stod(argv[5]);
         double V_g = stod(argv[6]);
         point(p, {V_s, V_d, V_g});
-    } else if (stype == "trans" && argc == 9) {
+    } else if (stype == "trans") {
+        if (argc != 9) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p = get_device_params(argv[3]);
         double V_s0 = stod(argv[4]);
         double V_d0 = stod(argv[5]);
@@ -410,7 +468,11 @@ int main(int argc, char ** argv) {
         double V_g1 = stod(argv[7]);
         int N = stoi(argv[8]);
         trans(p, {V_s0, V_d0, V_g0}, V_g1, N);
-    } else if (stype == "outp" && argc == 9) {
+    } else if (stype == "outp") {
+        if (argc != 9) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p = get_device_params(argv[3]);
         double V_s0 = stod(argv[4]);
         double V_d0 = stod(argv[5]);
@@ -418,7 +480,11 @@ int main(int argc, char ** argv) {
         double V_d1 = stod(argv[7]);
         int N = stoi(argv[8]);
         outp(p, {V_s0, V_d0, V_g0}, V_d1, N);
-    } else if (stype == "inv" && argc == 10) {
+    } else if (stype == "inv") {
+        if (argc != 10) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p1 = get_device_params(argv[3]);
         device_params p2 = get_device_params(argv[4]);
         double V_ss = stod(argv[5]);
@@ -427,7 +493,11 @@ int main(int argc, char ** argv) {
         double V_in1 = stod(argv[8]);
         int N = stoi(argv[9]);
         inv(p1, p2, {V_ss, V_dd, V_in0}, V_in1, N);
-    } else if (stype == "wave" && argc == 9) {
+    } else if (stype == "wave") {
+        if (argc != 9) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p = get_device_params(argv[3]);
         double V_s = stod(argv[4]);
         double V_d = stod(argv[5]);
@@ -435,7 +505,11 @@ int main(int argc, char ** argv) {
         double E = stod(argv[7]);
         bool src = (string(argv[8]) == "s");
         wave(p, {V_s, V_d, V_g}, E, src);
-    } else if (stype == "step" && argc == 12) {
+    } else if (stype == "step") {
+        if (argc != 12) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p = get_device_params(argv[3]);
         double V_s0 = stod(argv[4]);
         double V_d0 = stod(argv[5]);
@@ -446,7 +520,11 @@ int main(int argc, char ** argv) {
         double tswitch = stod(argv[10]);
         double T = stod(argv[11]);
         step(p, {V_s0, V_d0, V_g0}, {V_s1, V_d1, V_g1}, tswitch, T);
-    } else if (stype == "ro" && argc == 9) {
+    } else if (stype == "ro") {
+        if (argc != 9) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p1 = get_device_params(argv[3]);
         device_params p2 = get_device_params(argv[4]);
         double V_ss = stod(argv[5]);
@@ -454,7 +532,11 @@ int main(int argc, char ** argv) {
         double T = stod(argv[7]);
         double C = stod(argv[8]);
         ro(p1, p2, V_ss, V_dd, T, C);
-    } else if (stype == "inv_square" && argc == 13) {
+    } else if (stype == "inv_square") {
+        if (argc != 13) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p1 = get_device_params(argv[3]);
         device_params p2 = get_device_params(argv[4]);
         double V_s0 = stod(argv[5]);
