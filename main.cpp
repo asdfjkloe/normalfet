@@ -95,6 +95,17 @@ static inline void dev() {
     file.close();
 }
 
+// calculate capacitance of device
+static inline void cap(const device_params & p) {
+    double csg = c::eps_0 * M_PI * (p.R * p. R - (p.r_cnt + p.d_ox) * (p.r_cnt + p.d_ox)) / p.l_sg * 1e-9;
+    double cdg = c::eps_0 * M_PI * (p.R * p. R - (p.r_cnt + p.d_ox) * (p.r_cnt + p.d_ox)) / p.l_dg * 1e-9;
+    double czyl = 2 * M_PI * c::eps_0 * p.eps_ox * p.l_g / std::log((p.r_cnt + p.d_ox) / p.r_cnt) * 1e-9;
+    cout << "C_sg  = " << csg << endl;
+    cout << "C_dg  = " << cdg << endl;
+    cout << "C_zyl = " << czyl << endl;
+    cout << "C_g   = " << csg + cdg + czyl << endl;
+}
+
 // computes 1D potential
 static inline void pot1D(const device_params & p, const voltage<3> & V, bool nosc) {
     potential phi;
@@ -400,6 +411,9 @@ int main(int argc, char ** argv) {
     // second argument chooses the type of simulation
     if (stype == "dev") {
         dev();
+    } else if (stype == "cap") {
+        device_params p = get_device_params(argv[3]);
+        cap(p);
     } else if (stype == "pot1D") {
         if ((argc != 7) && (argc != 8)) {
             cout << "Wrong number of arguments!" << endl;
