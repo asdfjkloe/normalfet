@@ -2,6 +2,8 @@
 #define GEOMETRY_HPP
 
 #include <armadillo>
+#include <iostream>
+#include <iomanip>
 #include <string>
 
 class geometry {
@@ -22,19 +24,19 @@ public:
     double dx;
     double dr;
 
-    inline std::string to_string();
+    inline std::string to_string() const;
 };
 
 static const geometry fet_geometry {
     10.0, // eps_cnt
     25.0, // eps_ox
-     7.0, // l_sc
+    10.0, // l_sc
     10.0, // l_sox
      5.0, // l_sg
     20.0, // l_g
      5.0, // l_dg
     10.0, // l_dox
-     7.0, // l_dc
+    10.0, // l_dc
      1.0, // r_cnt
      3.0, // d_ox
      2.0, // r_ext
@@ -93,10 +95,12 @@ static const geometry tfetn_geometry {
      0.1  // dr
 };
 
-std::string geometry::to_string() {
+std::string geometry::to_string() const {
     using namespace std;
 
     stringstream ss;
+
+    ss << scientific << setprecision(15);
 
     ss << "eps_cnt = " << eps_cnt << endl;
     ss << "eps_ox  = " << eps_ox  << endl;

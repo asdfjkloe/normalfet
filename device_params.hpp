@@ -60,7 +60,7 @@ public:
     inline device_params(const std::string & n, const geometry & g, const model & m);
     inline device_params(const std::string & str);
 
-    inline std::string to_string();
+    inline std::string to_string() const;
 
     inline void update(const std::string & n);
 };
@@ -103,8 +103,8 @@ device_params::device_params(const std::string & str) {
         { "E_gc"   ,  3 },
         { "m_efc"  ,  4 },
         { "F_s"    ,  5 },
-        { "F_d"    ,  7 },
-        { "F_g"    ,  6 },
+        { "F_d"    ,  6 },
+        { "F_g"    ,  7 },
         { "eps_cnt",  8 },
         { "eps_ox" ,  9 },
         { "l_sc"   , 10 },
@@ -132,7 +132,7 @@ device_params::device_params(const std::string & str) {
     string line;
     while (getline(stream, line)) {
         // continue if empty line or comment
-        if ((line.empty()) || (line[line.find_first_not_of(' ')] == ';')) {
+        if ((line.empty()) || (line[line.find_first_not_of(' ')] == '#')) {
             continue;
         }
 
@@ -153,6 +153,10 @@ device_params::device_params(const std::string & str) {
             if (it->second == 0) {
                 name = right;
 
+                // remove quotes
+                name.erase(0, 1);
+                name.erase(name.size() - 1);
+
                 // add data index
                 s.insert(it->second);
             } else {
@@ -168,14 +172,14 @@ device_params::device_params(const std::string & str) {
     // check if all fields were in string
     if (s.size() != 22) {
         cout << "Error while loading device!!" << endl;
-        return;
+        throw;
     }
 
     // save data
     E_g     = d[ 1 - 1];
-    m_eff   = d[ 2 - 1];
+    m_eff   = d[ 2 - 1] * c::m_e;
     E_gc    = d[ 3 - 1];
-    m_efc   = d[ 4 - 1];
+    m_efc   = d[ 4 - 1] * c::m_e;
     F[S]    = d[ 5 - 1];
     F[D]    = d[ 6 - 1];
     F[G]    = d[ 7 - 1];
@@ -197,17 +201,17 @@ device_params::device_params(const std::string & str) {
     update(name);
 }
 
-std::string device_params::to_string() {
+std::string device_params::to_string() const {
     using namespace std;
 
     stringstream ss;
 
-    ss << "name    = " << name    << endl;
+    ss << "name    = \"" << name << "\"" << endl;
 
-    ss << endl << "; model" << endl;
+    ss << endl << "# model" << endl;
     ss << model::to_string();
 
-    ss << endl << "; geometry" << endl;
+    ss << endl << "# geometry" << endl;
     ss << geometry::to_string();
 
     return ss.str();

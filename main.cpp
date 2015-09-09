@@ -46,21 +46,67 @@ static inline void setup() {
 static inline device_params get_device_params(const string & n) {
     if (n == "nfet") {
         return nfet;
-    } else if (n == "nfetc") {
+    }
+    if (n == "nfetc") {
         return nfetc;
-    } else if (n == "pfet") {
+    }
+    if (n == "pfet") {
         return pfet;
-    } else if (n == "pfetc") {
+    }
+    if (n == "pfetc") {
         return pfetc;
     }
 
-    //LOAD DEV
+    ifstream file(n);
+    if (!file) {
+        cout << "no device_params with name or filename " << n << endl;
+        exit(0);
+    }
 
-    throw new invalid_argument("no device_params with name" + n);
+    stringstream ss;
+    ss << file.rdbuf();
+
+    try {
+        device_params p(ss.str());
+        return p;
+    } catch(...) {
+        cout << "device_params file corrupted!" << endl;
+        exit(0);
+    }
+
 }
 
 static inline void output_results() {
     cout << endl << endl << "results" << endl << scientific << setprecision(15);
+}
+
+// creates dev files
+static inline void dev() {
+    ofstream file = ofstream("nfet.ini");
+    file << nfet.to_string();
+    file.close();
+    file = ofstream("pfet.ini");
+    file << pfet.to_string();
+    file.close();
+    file = ofstream("nfetc.ini");
+    file << nfetc.to_string();
+    file.close();
+    file = ofstream("pfetc.ini");
+    file << pfetc.to_string();
+    file.close();
+}
+
+// calculate capacitance of device
+static inline void cap(const device_params & p) {
+    double csg = c::eps_0 * M_PI * (p.R * p. R - (p.r_cnt + p.d_ox) * (p.r_cnt + p.d_ox)) / p.l_sg * 1e-9;
+    double cdg = c::eps_0 * M_PI * (p.R * p. R - (p.r_cnt + p.d_ox) * (p.r_cnt + p.d_ox)) / p.l_dg * 1e-9;
+    double czyl = 2 * M_PI * c::eps_0 * p.eps_ox * p.l_g / std::log((p.r_cnt + p.d_ox) / p.r_cnt) * 1e-9;
+
+    output_results();
+    cout << "C_sg  = " << csg << endl;
+    cout << "C_dg  = " << cdg << endl;
+    cout << "C_zyl = " << czyl << endl;
+    cout << "C_g   = " << csg + cdg + czyl << endl;
 }
 
 // computes 1D potential
@@ -198,6 +244,29 @@ static inline void outp(const device_params & p, const voltage<3> & V0, double V
     }
 }
 
+// compute curves
+static inline void curve(const device_params & p, const voltage<3> & V0, double V_d1, double V_g1, int N_d, int N_g) {
+    std::vector<voltage<3>> V;
+
+    vec Vd = linspace(V0[D], V_d1, N_d);
+    vec Vg = linspace(V0[G], V_g1, N_g);
+
+    for (int i = 0; i < N_d; ++i) {
+        for (int j = 0; j < N_g; ++j) {
+            V.push_back({V0[S], Vd[i], Vg[j]});
+        }
+    }
+
+    auto I = curve(p, V);
+
+    output_results();
+    for (unsigned i = 0; i < V.size(); ++i) {
+        if (I[i].total(0) != 666) {
+            cout << V[i][S] << " " << V[i][D] << " " << V[i][G] << " " << I[i].total(0) << endl;
+        }
+    }
+}
+
 // compute steady state inverter
 static inline void inv(const device_params & p1, const device_params & p2, const voltage<3> & V0, double V_in1, int N) {
     inverter inv(p1, p2);
@@ -316,6 +385,8 @@ inline void test() {
     d2.steady_state();
     plot_ldos(nfetc, d2.phi[0], 1000, -1.5, 1.5);
 
+    return;
+
     auto curve0 = transfer(nfet, {{0.0, 0.2, -0.2}}, 0.2, 100);
     auto curve1 = arma::mat(curve0.n_rows, curve0.n_cols);
     auto curve1a = arma::mat(curve0.n_rows, curve0.n_cols);
@@ -366,21 +437,38 @@ int main(int argc, char ** argv) {
     }
 
     // second argument chooses the type of simulation
-    if (stype == "pot1D" && (argc == 7 || argc == 8)) {
+    if (stype == "dev") {
+        dev();
+    } else if (stype == "cap") {
+        device_params p = get_device_params(argv[3]);
+        cap(p);
+    } else if (stype == "pot1D") {
+        if ((argc != 7) && (argc != 8)) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p = get_device_params(argv[3]);
         double V_s = stod(argv[4]);
         double V_d = stod(argv[5]);
         double V_g = stod(argv[6]);
         bool nosc = ((argc == 8) && (string(argv[7]) == "nosc"));
         pot1D(p, {V_s, V_d, V_g}, nosc);
-    } else if (stype == "pot2D" && (argc == 7 || argc == 8)) {
+    } else if (stype == "pot2D") {
+        if ((argc != 7) && (argc != 8)) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p = get_device_params(argv[3]);
         double V_s = stod(argv[4]);
         double V_d = stod(argv[5]);
         double V_g = stod(argv[6]);
         bool nosc = ((argc == 8) && (string(argv[7]) == "nosc"));
         pot2D(p, {V_s, V_d, V_g}, nosc);
-    } else if (stype == "ldos" && (argc == 10 || argc == 11)) {
+    } else if (stype == "ldos") {
+        if ((argc != 10) && (argc != 11)) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p = get_device_params(argv[3]);
         double V_s = stod(argv[4]);
         double V_d = stod(argv[5]);
@@ -390,19 +478,31 @@ int main(int argc, char ** argv) {
         double N = stod(argv[9]);
         bool nosc = ((argc == 11) && (string(argv[10]) == "nosc"));
         ldos(p, {V_s, V_d, V_g}, E0, E1, N, nosc);
-    } else if (stype == "charge" && argc == 7) {
+    } else if (stype == "charge") {
+        if (argc != 7) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p = get_device_params(argv[3]);
         double V_s = stod(argv[4]);
         double V_d = stod(argv[5]);
         double V_g = stod(argv[6]);
         charge(p, {V_s, V_d, V_g});
-    } else if (stype == "point" && argc == 7) {
+    } else if (stype == "point") {
+        if (argc != 7) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p = get_device_params(argv[3]);
         double V_s = stod(argv[4]);
         double V_d = stod(argv[5]);
         double V_g = stod(argv[6]);
         point(p, {V_s, V_d, V_g});
-    } else if (stype == "trans" && argc == 9) {
+    } else if (stype == "trans") {
+        if (argc != 9) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p = get_device_params(argv[3]);
         double V_s0 = stod(argv[4]);
         double V_d0 = stod(argv[5]);
@@ -410,7 +510,11 @@ int main(int argc, char ** argv) {
         double V_g1 = stod(argv[7]);
         int N = stoi(argv[8]);
         trans(p, {V_s0, V_d0, V_g0}, V_g1, N);
-    } else if (stype == "outp" && argc == 9) {
+    } else if (stype == "outp") {
+        if (argc != 9) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p = get_device_params(argv[3]);
         double V_s0 = stod(argv[4]);
         double V_d0 = stod(argv[5]);
@@ -418,7 +522,25 @@ int main(int argc, char ** argv) {
         double V_d1 = stod(argv[7]);
         int N = stoi(argv[8]);
         outp(p, {V_s0, V_d0, V_g0}, V_d1, N);
-    } else if (stype == "inv" && argc == 10) {
+    } else if (stype == "curve") {
+        if (argc != 11) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
+        device_params p = get_device_params(argv[3]);
+        double V_s0 = stod(argv[4]);
+        double V_d0 = stod(argv[5]);
+        double V_g0 = stod(argv[6]);
+        double V_d1 = stod(argv[7]);
+        double V_g1 = stod(argv[8]);
+        int N_d = stoi(argv[9]);
+        int N_g = stoi(argv[10]);
+        curve(p, {V_s0, V_d0, V_g0}, V_d1, V_g1, N_d, N_g);
+    } else if (stype == "inv") {
+        if (argc != 10) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p1 = get_device_params(argv[3]);
         device_params p2 = get_device_params(argv[4]);
         double V_ss = stod(argv[5]);
@@ -427,7 +549,11 @@ int main(int argc, char ** argv) {
         double V_in1 = stod(argv[8]);
         int N = stoi(argv[9]);
         inv(p1, p2, {V_ss, V_dd, V_in0}, V_in1, N);
-    } else if (stype == "wave" && argc == 9) {
+    } else if (stype == "wave") {
+        if (argc != 9) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p = get_device_params(argv[3]);
         double V_s = stod(argv[4]);
         double V_d = stod(argv[5]);
@@ -435,7 +561,11 @@ int main(int argc, char ** argv) {
         double E = stod(argv[7]);
         bool src = (string(argv[8]) == "s");
         wave(p, {V_s, V_d, V_g}, E, src);
-    } else if (stype == "step" && argc == 12) {
+    } else if (stype == "step") {
+        if (argc != 12) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p = get_device_params(argv[3]);
         double V_s0 = stod(argv[4]);
         double V_d0 = stod(argv[5]);
@@ -446,7 +576,11 @@ int main(int argc, char ** argv) {
         double tswitch = stod(argv[10]);
         double T = stod(argv[11]);
         step(p, {V_s0, V_d0, V_g0}, {V_s1, V_d1, V_g1}, tswitch, T);
-    } else if (stype == "ro" && argc == 9) {
+    } else if (stype == "ro") {
+        if (argc != 9) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p1 = get_device_params(argv[3]);
         device_params p2 = get_device_params(argv[4]);
         double V_ss = stod(argv[5]);
@@ -454,7 +588,11 @@ int main(int argc, char ** argv) {
         double T = stod(argv[7]);
         double C = stod(argv[8]);
         ro(p1, p2, V_ss, V_dd, T, C);
-    } else if (stype == "inv_square" && argc == 13) {
+    } else if (stype == "inv_square") {
+        if (argc != 13) {
+            cout << "Wrong number of arguments!" << endl;
+            return 0;
+        }
         device_params p1 = get_device_params(argv[3]);
         device_params p2 = get_device_params(argv[4]);
         double V_s0 = stod(argv[5]);
@@ -470,416 +608,3 @@ int main(int argc, char ** argv) {
         test();
     }
 }
-
-/*
-// set the type of device (mosfet or tfet)
-static device_params ntype = nfet;
-static device_params ptype = pfet;
-
-
-static inline void point(char ** argv) {
-    // computes the current for a given voltage point
-
-    double vs = stod(argv[3]);
-    double vd = stod(argv[4]);
-    double vg = stod(argv[5]);
-
-    device d("ntype", ntype, {vs, vd, vg});
-    d.steady_state();
-    cout << "I = " << d.I[0].total[0] << std::endl;
-}
-
-static inline void trans(char ** argv) {
-    // starts transfer-curve simulations with a certain gate-length
-
-    double l_g = stod(argv[3]);
-    double sox = stod(argv[4]);
-    double Vg0 = stod(argv[5]);
-    double Vg1 = stod(argv[6]);
-    double Vd  = stod(argv[7]);
-    int N      = stoi(argv[8]);
-
-    stringstream ss;
-    ss << "transfer/lg=" << l_g << "_lsox=" << sox << "_Vd=" << Vd;
-    cout << "saving results in " << save_folder(ss.str()) << endl;
-
-    device d("prototype", ntype);
-    d.p.l_g = l_g;
-
-    // extract total contact length from prototype
-    double tmp = d.p.l_sc + d.p.l_sox;
-    d.p.l_sox = sox;
-    d.p.l_sc = tmp - sox;
-    d.p.update("updated");
-
-    transfer<true>(d.p, { { 0, Vd, Vg0 } }, Vg1, N);
-
-    ofstream s(save_folder() + "/device.ini");
-    s << d.p.to_string();
-    s.close();
-}
-
-static inline void outp(char ** argv) {
-    // starts output-curve simulations with a certain gate-length
-
-    double l_g = stod(argv[3]);
-    double Vd0 = stod(argv[4]);
-    double Vd1 = stod(argv[5]);
-    double Vg  = stod(argv[6]);
-    int N      = stoi(argv[7]);
-
-    stringstream ss;
-    ss << "output/lg=" << l_g << "_Vg=" << Vg;
-    cout << "saving results in " << save_folder(ss.str()) << endl;
-
-    device d("prototype", ntype);
-    d.p.l_g = l_g;
-    d.p.update("updated");
-
-    output<true>(d.p, { { 0, Vd0, Vg } }, Vd1, N);
-
-    ofstream s(save_folder() + "/device.ini");
-    s << d.p.to_string();
-    s.close();
-}
-
-static void inv(char ** argv) {
-    // starts a static inverter simulation
-
-    double Vin0  = stod(argv[3]);
-    double Vin1  = stod(argv[4]);
-    double V_dd  = stod(argv[5]);
-    int    N     = stoi(argv[6]);
-
-    inverter inv(ntype, ptype);
-
-    stringstream ss;
-    ss << "ntd_inverter/Vdd=" << V_dd;
-
-    cout << "saving results in " << save_folder(ss.str()) << endl;
-
-    vec V_in = linspace(Vin0, Vin1, N);
-    vec V_out(N);
-
-    for (int i = 0; i < N; ++i) {
-        cout << "\nstep " << i+1 << "/" << N << ": \n";
-        inv.steady_state({ 0, V_dd, V_in(i) });
-        V_out(i) = inv.get_output(0)->V;
-    }
-
-    mat ret = join_horiz(V_in, V_out);
-    ret.save(save_folder() + "/inverter_curve.csv", csv_ascii);
-
-    ofstream sn(save_folder() + "/ntype.ini");
-    sn << ntype.to_string();
-    sn.close();
-
-    ofstream sp(save_folder() + "/ptype.ini");
-    sp << ptype.to_string();
-    sp.close();
-}
-
-static inline void ro(char ** argv) {
-    // starts a transient ring-oscillator simulation
-
-    double T = stod(argv[3]);
-    double C = stod(argv[4]);
-    double V_dd = stod(argv[5]);
-    stringstream ss;
-    ss << "ring_oscillator/" << "C=" << C << "_Vdd=" << V_dd;
-    cout << "saving results in " << save_folder(ss.str()) << endl;
-
-    ring_oscillator<3> ro(ntype, ptype, C);
-    ro.time_evolution(signal<2>(T, voltage<2>{ 0.0, V_dd }));
-    ro.save<true>();
-
-    ofstream sn(save_folder() + "/ntype.ini");
-    sn << ntype.to_string();
-    sn.close();
-
-    ofstream sp(save_folder() + "/ptype.ini");
-    sp << ptype.to_string();
-    sp.close();
-}
-
-static inline void ldos(char ** argv) {
-    // plots the ldos for a self-consistent static situation
-
-    double vd = stod(argv[3]);
-    double vg = stod(argv[4]);
-    double Emin = stod(argv[5]);
-    double Emax = stod(argv[6]);
-    int    N    = stoi(argv[7]);
-
-    device dev("test", ntype, voltage<3>{ 0, vd, vg });
-    dev.steady_state();
-
-    plot_ldos(dev.p, dev.phi[0], N, Emin, Emax);
-}
-
-static inline void pot(char ** argv) {
-    // plots a self-consisent potential
-
-    double vd = stod(argv[3]);
-    double vg = stod(argv[4]);
-
-    device dev("test", ntype, voltage<3>{ 0, vd, vg });
-    dev.steady_state();
-
-    plot(make_pair(dev.p.x, dev.phi[0].data));
-    potential::plot2D(dev.p, { 0, vd, vg }, dev.n[0]);
-}
-
-static inline void den(char ** argv) {
-
-    double vd = stod(argv[3]);
-    double vg = stod(argv[4]);
-
-    device dev("test", ntype, voltage<3>{ 0, vd, vg });
-    dev.steady_state();
-
-    plot(make_pair(dev.p.x, dev.n[0].total));
-}
-
-static inline void gstep(char ** argv) {
-    // time-dependent simulation with step-signal on the gate
-
-    double V0    = stod(argv[3]);
-    double V1    = stod(argv[4]);
-    double Vd    = stod(argv[5]);
-    double beg   = stod(argv[6]);
-    double len   = stod(argv[7]);
-    double cool  = stod(argv[8]);
-
-    stringstream ss;
-    ss << "gate_step_signal/" << "V0=" << V0 << "V1=" << V1;
-    cout << "saving results in " << save_folder(ss.str()) << endl;
-
-    signal<3> pre   = linear_signal<3>(beg,  { 0, Vd, V0 }, { 0, Vd, V0 }); // before
-    signal<3> slope = linear_signal<3>(len,  { 0, Vd, V0 }, { 0, Vd, V1 }); // while
-    signal<3> after = linear_signal<3>(cool, { 0, Vd, V1 }, { 0, Vd, V1 }); // after
-
-    signal<3> sig = pre + slope + after; // complete signal
-
-    device d("nfet", ntype, { 0, Vd, V0 });
-    d.steady_state();
-    d.init_time_evolution(sig.N_t);
-
-    // get energy indices around fermi energy and init movie
-    std::vector<std::pair<int, int>> E_ind1 = movie::around_Ef(d, +0.1);
-    std::vector<std::pair<int, int>> E_ind2 = movie::around_Ef(d, +0.4);
-    std::vector<std::pair<int, int>> E_ind;
-    E_ind.reserve(E_ind1.size() + E_ind2.size());
-    E_ind.insert(E_ind.end(), E_ind1.begin(), E_ind1.end());
-    E_ind.insert(E_ind.end(), E_ind2.begin(), E_ind2.end());
-
-    //movie argo(d, E_ind);
-
-    // set voltages
-    // (note: only V_g is needed, but I wanted to try it for later...)
-    for (int i = 1; i < sig.N_t; ++i) {
-        for (int term : {S, D, G}) {
-            d.contacts[G]->V = sig.V[i][term];
-        }
-        d.time_step();
-    }
-    d.save();
-}
-
-static inline void gsquare(char ** argv) {
-
-    double V0    = stod(argv[3]);
-    double V1    = stod(argv[4]);
-    double Vd    = stod(argv[5]);
-    double rise  = stod(argv[6]);
-    double fall  = stod(argv[7]); // after begin
-    double f     = stod(argv[8]);
-    double T     = stod(argv[9]);
-
-
-    stringstream ss;
-    ss << "gate_square_signal/" << "f=" << f;
-    cout << "saving results in " << save_folder(ss.str()) << endl;
-
-    signal<3> sig = square_signal<3>(T, { 0, V0, Vd }, { 0, V1, Vd}, f, rise, fall);
-
-    vec vs(sig.N_t);
-    vec vd(sig.N_t);
-    vec vg(sig.N_t);
-    for (int i = 0; i < sig.N_t; ++i) {
-        vs(i) = sig.V[i][S];
-        vd(i) = sig.V[i][D];
-        vg(i) = sig.V[i][G];
-    }
-    plot(vs, vd, vg);
-
-    device d("nfet", ntype, sig.V[0]);
-    d.steady_state();
-    d.init_time_evolution(sig.N_t);
-
-//    // get energy indices around fermi energy and init movie
-//    std::vector<std::pair<int, int>> E_ind1 = movie::around_Ef(d, -0.05);
-//    std::vector<std::pair<int, int>> E_ind2 = movie::around_Ef(d, -0.1);
-//    std::vector<std::pair<int, int>> E_ind;
-//    E_ind.reserve(E_ind1.size() + E_ind2.size());
-//    E_ind.insert(E_ind.end(), E_ind1.begin(), E_ind1.end());
-//    E_ind.insert(E_ind.end(), E_ind2.begin(), E_ind2.end());
-
-//    //movie argo(d, E_ind);
-
-    // set voltages
-    for (int i = 1; i < sig.N_t; ++i) {
-        for (int term : {S, D, G}) {
-            d.contacts[G]->V = sig.V[i][term];
-        }
-        d.time_step();
-    }
-    d.save();
-}
-
-static inline void gsine(char ** argv) {
-    // time-dependent simulation with step-signal on the gate
-
-    double V0    = stod(argv[3]);
-    double Vamp  = stod(argv[4]);
-    double Vd    = stod(argv[5]);
-    double beg   = stod(argv[6]);
-    double len   = stod(argv[7]); // after begin
-    double f     = stod(argv[8]);
-    double ph    = stod(argv[9]) * 2 * M_PI; // phase
-
-    double Vstart = V0 + Vamp * sin(ph);
-
-    stringstream ss;
-    ss << "gate_sine_signal/" << "f=" << f;
-    cout << "saving results in " << save_folder(ss.str()) << endl;
-
-    signal<3> pre   = linear_signal<3>(beg,  { 0, Vd, Vstart }, { 0, Vd, Vstart }); // before
-    signal<3> sine  =   sine_signal<3>(len,  { 0, Vd, V0 }, { 0,  0, Vamp }, f, ph); // oscillation
-
-    signal<3> sig = pre + sine; // complete signal
-
-//    vec vs(sig.N_t);
-//    vec vd(sig.N_t);
-//    vec vg(sig.N_t);
-//    for (int i = 0; i < sig.N_t; ++i) {
-//        vs(i) = sig.V[i][S];
-//        vd(i) = sig.V[i][D];
-//        vg(i) = sig.V[i][G];
-//    }
-//    plot(vs, vd, vg);
-
-    device d("nfet", ntype, sig.V[0]);
-    d.steady_state();
-    d.init_time_evolution(sig.N_t);
-
-    // get energy indices around fermi energy and init movie
-    std::vector<std::pair<int, int>> E_ind1 = movie::around_Ef(d, -0.05);
-    std::vector<std::pair<int, int>> E_ind2 = movie::around_Ef(d, -0.1);
-    std::vector<std::pair<int, int>> E_ind;
-    E_ind.reserve(E_ind1.size() + E_ind2.size());
-    E_ind.insert(E_ind.end(), E_ind1.begin(), E_ind1.end());
-    E_ind.insert(E_ind.end(), E_ind2.begin(), E_ind2.end());
-
-    //movie argo(d, E_ind);
-
-    // set voltages
-    for (int i = 1; i < sig.N_t; ++i) {
-        for (int term : {S, D, G}) {
-            d.contacts[G]->V = sig.V[i][term];
-        }
-        d.time_step();
-    }
-    d.save();
-}
-
-static inline void inv_square(char ** argv) {
-    double f = stod(argv[3]);
-    int N = stoi(argv[4]);
-    double Vs = stod(argv[5]);
-    double Vd = stod(argv[6]);
-    double Vg0 = stod(argv[7]);
-    double Vg1 = stod(argv[8]);
-    int ramp = stoi(argv[9]);
-
-    auto s = square_signal<3>(N / f, {Vs, Vd, Vg0}, {Vs, Vd, Vg1}, f, ramp * c::dt, ramp * c::dt);
-
-    // spam signal to cout
-    for (int i = 0; i < s.N_t; ++i) {
-        cout << s.V[i][G] << endl;
-    }
-    cout << endl << endl;
-
-    inverter inv(nfet, pfet, 5e-17);
-    inv.time_evolution(s);
-}
-
-static inline void test(char **) {
-    arma::vec R0 = potential::get_R0(nfet, {0.0, 0.0, 0.0});
-    charge_density n1, n2;
-    n1.total = arma::vec(nfet.N_x);
-    n2.total = arma::vec(nfet.N_x);
-
-    for (int i = 0; i < nfet.N_x; ++i) {
-        n1.total[i] = +5e-21 * (std::tanh((i - 10.0)/5.0) + 1) * (std::tanh(-(i + 10.0 - nfet.N_x)/5.0) + 1) / 4;
-        n2.total[i] = -5e-21 * (std::tanh((i - 10.0)/5.0) + 1) * (std::tanh(-(i + 10.0 - nfet.N_x)/5.0) + 1) / 4;
-    }
-
-    std::cout << n1.total[nfet.N_x / 2] << std::endl;
-
-    plot(n1.total);
-
-    potential phi0(nfet, R0);
-    potential phi1(nfet, R0, n1);
-    potential phi2(nfet, R0, n2);
-
-    plot(phi0.data);
-    plot(phi1.data);
-    plot(phi2.data);
-}
-
-int main(int argc, char ** argv) {
-    setup();
-
-    // first argument is always the number of threads
-    // (can not be more than the number specified when compiling openBLAS)
-    if (argc > 1) {
-        omp_set_num_threads(stoi(argv[1]));
-    }
-
-    string stype = "";
-    if (argc > 2) {
-        stype = argv[2];
-    }
-
-    // second argument chooses the type of simulation
-    if (stype == "point" && argc == 6) {
-        point(argv);
-    } else if (stype == "trans" && argc == 9) {
-        trans(argv);
-    } else if (stype == "outp" && argc == 8) {
-        outp(argv);
-    } else if (stype == "inv" && argc == 7) {
-        inv(argv);
-    } else if (stype == "ldos" && argc == 8) {
-        ldos(argv);
-    } else if (stype == "pot" && argc == 5) {
-        pot(argv);
-    } else if (stype == "den" && argc == 5) {
-        den(argv);
-    } else if (stype == "ro" && argc == 6) {
-        ro(argv);
-    } else if (stype == "gstep" && argc == 9) {
-        gstep(argv);
-    } else if (stype == "gsine" && argc == 10) {
-        gsine(argv);
-    } else if (stype == "gsquare" && argc == 10) {
-        gsquare(argv);
-    } else if (stype == "inv_square" && argc == 10) {
-        inv_square(argv);
-    } else {
-        test(argv);
-    }
-
-    return 0;
-}*/

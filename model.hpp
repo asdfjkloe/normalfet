@@ -3,6 +3,8 @@
 
 #include <armadillo>
 #include <array>
+#include <iostream>
+#include <iomanip>
 #include <string>
 
 #include "constant.hpp"
@@ -16,7 +18,7 @@ public:
     double m_efc;
     std::array<double, 3> F;
 
-    inline std::string to_string();
+    inline std::string to_string() const;
 };
 
 static const model nfetc_model { // most general model
@@ -103,15 +105,17 @@ static const model ptfet_model {
     }
 };
 
-std::string model::to_string() {
+std::string model::to_string() const {
     using namespace std;
 
     stringstream ss;
 
+    ss << scientific << setprecision(15);
+
     ss << "E_g     = " << E_g   << endl;
-    ss << "m_eff   = " << m_eff << endl;
+    ss << "m_eff   = " << m_eff / c::m_e << endl;
     ss << "E_gc    = " << E_gc  << endl;
-    ss << "m_efc   = " << m_efc << endl;
+    ss << "m_efc   = " << m_efc / c::m_e << endl;
     ss << "F_s     = " << F[S]  << endl;
     ss << "F_d     = " << F[D]  << endl;
     ss << "F_g     = " << F[G]  << endl;
