@@ -73,7 +73,6 @@ static inline device_params get_device_params(const string & n) {
         cout << "device_params file corrupted!" << endl;
         exit(0);
     }
-
 }
 
 static inline void output_results() {
